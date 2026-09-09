@@ -107,9 +107,6 @@ void EntityCreateMenu()
 		if (selectedItem == 0)
 		{
 			// Add MeshRenderer
-
-			
-
 			newRenderer.mesh = cubeMesh;
 			newRenderer.material = material;
 			selectedEntity->AddComponent<MeshRenderer>(newRenderer);
@@ -136,6 +133,24 @@ void EntityCreateMenu()
 	ImGui::End();
 }
 
+//static int TextCallback(const char* buffer, MeshRenderer* meshRenderer)//ImGuiInputTextCallbackData* data)
+//{
+//	//MeshRenderer* meshRenderer = (MeshRenderer*)data->UserData;
+//	if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit)
+//	{
+//		const char* current_text = data->Buf;
+//		//if (renderer.getMeshFromDir(current_text).vertices.size() > 0) meshRenderer->setMesh(renderer.getMeshFromDir(current_text));
+//		if (renderer.getMeshFromDir(current_text).vertices.size() > 0) meshRenderer->setMesh(current_text);
+//	}
+//	return 0;
+//}
+
+static int EnterMesh(const char* current_text, MeshRenderer* meshRenderer)//ImGuiInputTextCallbackData* data)
+{
+	//if (renderer.getMeshFromDir(current_text).vertices.size() > 0) meshRenderer->setMesh(renderer.getMeshFromDir(current_text));
+	if (renderer.getMeshFromDir(current_text).vertices.size() > 0) meshRenderer->setMesh(current_text);
+	return 0;
+}
 
 void InspectorMenu()
 {
@@ -186,8 +201,16 @@ void InspectorMenu()
 		ImGui::DragFloat3("Size", &selectedEntity->transform.scale.x, 0.1f);
 		if (selectedEntity->HasComponent<MeshRenderer>())
 		{
+			static char buffer[128] = "";
+			ImGuiInputTextFlags flags = ImGuiInputTextFlags_CallbackEdit;
 			MeshRenderer* meshRenderer = selectedEntity->GetComponent<MeshRenderer>();
 			ImGui::Text("MeshRenderer");
+			ImGui::Text("Mesh");
+			//ImGui::InputText("Cube.glb", buffer, IM_ARRAYSIZE(buffer), flags, TextCallback, &meshRenderer);
+			if (ImGui::InputText("Cube.glb", buffer, IM_ARRAYSIZE(buffer), ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				EnterMesh(buffer, meshRenderer);
+			}
 			ImGui::Text("Material");
 			//ImGui::InputText("Shader", (char*)meshRenderer->material.shader, 256);
 			ImGui::ColorEdit3("Diffuse", &meshRenderer->material.diffuse.x);

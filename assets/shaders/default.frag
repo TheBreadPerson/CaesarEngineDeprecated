@@ -44,13 +44,13 @@ struct SceneLight
 
 out vec4 FragColor; 
 
-in vec4 color;
-in vec2 texCoord;
+layout(location = 0) in vec4 color;
+layout(location = 1) in vec2 texCoord;
 
-in vec3 Normal;
-in vec3 FragPos;
+layout(location = 2) in vec3 Normal;
+layout(location = 3) in vec3 FragPos;
 
-in float depth;
+layout(location = 4) in float depth;
 
 // Camera's position
 uniform vec3 viewPos;
@@ -81,6 +81,9 @@ void main()
 
 	//result += CalcDirLight(sun, Normal, viewDir);
 
+	vec4 texColor = texture(material.diffuseMap, texCoord);
+	if(texColor.a < 0.1)
+        discard;
 	FragColor = vec4(result, 1.0f);
 }
 

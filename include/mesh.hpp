@@ -5,6 +5,8 @@
 #include "transform.hpp"
 #include <filesystem>
 #include <memory>
+#include <unordered_map>
+#include <stdio.h>
 
 
 struct Vertex
@@ -49,7 +51,9 @@ class MeshRenderer : public Component
 {
 public:
     Mesh mesh;
+	std::string mesh_path;
 	Material material;
+	void setMesh(const char* _mesh_path);
 };
 
 namespace graphics

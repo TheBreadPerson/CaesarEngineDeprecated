@@ -128,6 +128,11 @@ Mesh graphics::loadModel(std::filesystem::path path)
 	return gltfMesh;
 }
 
+void MeshRenderer::setMesh(const char* _mesh_path)
+{
+	mesh_path = _mesh_path;
+}
+
 
 unsigned int graphics::LoadTexture(const char* filepath)
 {

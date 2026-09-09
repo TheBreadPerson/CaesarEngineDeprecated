@@ -36,7 +36,13 @@ public:
 		{
 			/*Mesh* mesh = entity.GetComponent<MeshRenderer>()->mesh;*/
 			// Bind and draw the mesh
-			drawMesh(entity.GetComponent<MeshRenderer>()->mesh);
+			if (entity.GetComponent<MeshRenderer>()->mesh_path.length() < 1)
+			{
+				return;
+			}
+			Mesh render_mesh = getMeshFromDir(entity.GetComponent<MeshRenderer>()->mesh_path.c_str());
+			drawMesh(&render_mesh);
+			//drawMesh(&entity.GetComponent<MeshRenderer>()->mesh);
 		}
 		else
 		{
@@ -57,6 +63,7 @@ public:
 		{
 			std::cout << "ERROR: MESH NOT FOUND" << std::endl;
 		}
+		return Mesh();
 	}
 
 	void reloadShaders();
@@ -123,12 +130,12 @@ private:
 	}
 
 	// Perform the draw call for the mesh
-	void drawMesh(Mesh mesh)
+	void drawMesh(Mesh* mesh)
 	{
-		//if (mesh == nullptr) return;
-		if (mesh.VAO == 0) setupMesh(mesh);
-		glBindVertexArray(mesh.VAO);
-		glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+		if (mesh == nullptr) return;
+		if (mesh->VAO == 0) setupMesh(*mesh);
+		glBindVertexArray(mesh->VAO);
+		glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 	}
 };

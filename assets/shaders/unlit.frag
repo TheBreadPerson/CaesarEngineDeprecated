@@ -10,6 +10,6 @@ uniform vec4 objColor;
 
 void main()
 {
-    if(useTexture)FragColor = texture(texture2d, texCoord)*color;
+    if(useTexture) FragColor = texture(texture2d, texCoord)*color;
     else FragColor = objColor;
 }
