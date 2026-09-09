@@ -48,7 +48,7 @@ struct Mesh
 class MeshRenderer : public Component
 {
 public:
-    Mesh* mesh;
+    Mesh mesh;
 	Material material;
 };
 

@@ -23,13 +23,16 @@ Material material;
 Mesh cubeMesh;
 MeshRenderer m_renderer;
 
+MeshRenderer newRenderer;
+
 std::vector<const char*> components;
 ImGuiWindowFlags immobile = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
 ImGuiWindowFlags movable = ImGuiWindowFlags_NoResize;
 
 void Editor::init()
 {
-	cubeMesh = graphics::loadModel("assets/models/Cube.glb");
+	Mesh loaded_cube = graphics::loadModel("assets/models/Cube.glb");
+	cubeMesh = loaded_cube;
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -50,11 +53,7 @@ void Editor::init()
 	components.push_back("Rigidbody");
 
 	material.shader = 3;
-	material.diffuse = vec3(1.0f);
-	Entity* n = new Entity();
-	m_renderer.mesh = &cubeMesh;
-	n->AddComponent<MeshRenderer>(m_renderer);
-	Instantiate(n);
+	material.diffuse = vec4(1.0f);
 }
 
 Entity* CreateLight()
@@ -109,9 +108,9 @@ void EntityCreateMenu()
 		{
 			// Add MeshRenderer
 
-			MeshRenderer newRenderer;
+			
 
-			newRenderer.mesh = &cubeMesh;
+			newRenderer.mesh = cubeMesh;
 			newRenderer.material = material;
 			selectedEntity->AddComponent<MeshRenderer>(newRenderer);
 		}

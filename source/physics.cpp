@@ -30,13 +30,13 @@ bool CheckCollision(Collider* a, Collider* b)
 	Rigidbody* rb = a->entity->GetComponent<Rigidbody>();
 	
 	// Calculate half scales for easier collision checking
-	float aHalfWidth = a->scale.x / 2.0f;
-	float aHalfHeight = a->scale.y / 2.0f;
-	float aHalfDepth = a->scale.z / 2.0f;
+	float aHalfWidth = a->scale.x;
+	float aHalfHeight = a->scale.y;
+	float aHalfDepth = a->scale.z;
 
-	float bHalfWidth = b->scale.x / 2.0f;
-	float bHalfHeight = b->scale.y / 2.0f;
-	float bHalfDepth = b->scale.z / 2.0f;
+	float bHalfWidth = b->scale.x;
+	float bHalfHeight = b->scale.y;
+	float bHalfDepth = b->scale.z;
 
 	// Store positions for both colliders to avoid repeated access
 	float aPosX = a->entity->transform.position.x + a->offset.x;

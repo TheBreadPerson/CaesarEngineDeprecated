@@ -15,6 +15,7 @@
 #include <stb_image.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
+#include <filesystem>
 
 using namespace glm;
 
@@ -32,8 +33,6 @@ int textureUnits[16] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 Shader defaultShader("assets/shaders/default.vert", "assets/shaders/default.frag");
 Shader unlitShader("assets/shaders/unlit.vert", "assets/shaders/unlit.frag");
 std::vector<Shader> shaders;
-
-
 
 vec3 cubePositions[] =
 {
@@ -53,6 +52,19 @@ void Renderer::init()
 
 	cam.transform.position = vec3(0.0f, 0.0f, 0.0f);
 
+	const char* path = "assets/models/";
+	// Loop through models folder and setup all meshes, added their mesh data to meshes vector
+	if (std::filesystem::exists(path) && std::filesystem::is_directory(path))
+	{
+		for (const auto& entry : std::filesystem::directory_iterator(path))
+		{
+			if (std::filesystem::is_regular_file(entry.status()) && entry.path().extension() == ".glb")
+			{
+				meshes.push_back(graphics::loadModel(entry.path()));
+				mesh_dirs.push_back(std::filesystem::relative(entry.path(), path).generic_string());
+			}
+		}
+	}
 
 	for (Entity* object : currentScene.entityList)
 	{
@@ -60,7 +72,7 @@ void Renderer::init()
 		{
 			continue;
 		}
-		setupMesh(*object->GetComponent<MeshRenderer>()->mesh);
+		setupMesh(object->GetComponent<MeshRenderer>()->mesh);
 	}
 
 	unlitShader.compile();
@@ -70,7 +82,6 @@ void Renderer::init()
 	shaders.push_back(unlitShader);
 
 	unlitShader.use();
-
 
 	glClearColor(0.01f, 0.01f, 0.01f, 1.0f);
 	glViewport(0, 0, screen_width, screen_height);
@@ -149,7 +160,8 @@ void Renderer::draw(GLFWwindow* window)
 			}
 
 			// MATERIAL HERE
-			if (shader.ID == 6) {
+			if (shader.ID == 6)
+			{
 				// Activate and bind the emission map
 				glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
 				glBindTexture(GL_TEXTURE_2D, object->GetComponent<MeshRenderer>()->material.emissionMap); // Bind emission map
@@ -159,12 +171,16 @@ void Renderer::draw(GLFWwindow* window)
 				// Activate and bind the diffuse map
 				glActiveTexture(GL_TEXTURE1); // Activate texture unit 1
 				glBindTexture(GL_TEXTURE_2D, object->GetComponent<MeshRenderer>()->material.diffuseMap); // Bind diffuse map
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 				shader.setInt("material.diffuseMap", 1); // Set the sampler uniform to texture unit 1
 				shader.setVec3("material.diffuse", object->GetComponent<MeshRenderer>()->material.diffuse);
 
 				// Activate and bind the specular map
 				glActiveTexture(GL_TEXTURE2); // Activate texture unit 2
 				glBindTexture(GL_TEXTURE_2D, object->GetComponent<MeshRenderer>()->material.specularMap); // Bind specular map
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 				shader.setInt("material.specularMap", 2); // Set the sampler uniform to texture unit 2
 				shader.setVec3("material.specular", object->GetComponent<MeshRenderer>()->material.specular);
 
@@ -176,11 +192,8 @@ void Renderer::draw(GLFWwindow* window)
 
 
 			//SKYBOX
-			if (object->GetID() == currentScene.skybox_ent->GetID()) glDepthMask(GL_FALSE);
-			if (object->name == "mesh") object->GetComponent<MeshRenderer>()->mesh = currentScene.skybox_ent->GetComponent<MeshRenderer>()->mesh;
+			if (object->GetID() == currentScene.skybox_ent->GetID()) glDepthMask(GL_FALSE); // If object is skybox, disable depth
 			render(*object);
-			//drawMesh(object->GetComponent<MeshRenderer>()->mesh);
-			if (object->name == "bello") render(*currentScene.skybox_ent);
 
 			glDepthMask(GL_TRUE);
 		}

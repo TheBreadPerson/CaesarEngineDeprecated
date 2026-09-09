@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <algorithm>
+#include <stdio.h>
 
 using namespace glm;
 
@@ -24,6 +26,9 @@ public:
 
 	void cleanup();
 
+	std::vector<Mesh> meshes;
+	std::vector<std::string> mesh_dirs;
+
 	void render(Entity& entity)
 	{
 		// Assuming entity has a method to check if it has components and get them
@@ -36,6 +41,21 @@ public:
 		else
 		{
 			std::cerr << "Entity " << entity.name << " does not have a MeshRenderer component" << std::endl;
+		}
+	}
+
+	Mesh getMeshFromDir(const char* mesh_dir)
+	{
+		std::string mesh_name = mesh_dir;
+		auto it = std::find(mesh_dirs.begin(), mesh_dirs.end(), mesh_name);
+		if (it != mesh_dirs.end())
+		{
+			size_t index = it - mesh_dirs.begin();
+			return meshes[index];
+		}
+		else
+		{
+			std::cout << "ERROR: MESH NOT FOUND" << std::endl;
 		}
 	}
 
@@ -103,11 +123,12 @@ private:
 	}
 
 	// Perform the draw call for the mesh
-	void drawMesh(Mesh* mesh)
+	void drawMesh(Mesh mesh)
 	{
-		if (mesh == nullptr) return;
-		glBindVertexArray(mesh->VAO);
-		glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
+		//if (mesh == nullptr) return;
+		if (mesh.VAO == 0) setupMesh(mesh);
+		glBindVertexArray(mesh.VAO);
+		glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 	}
 };

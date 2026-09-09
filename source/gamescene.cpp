@@ -9,22 +9,17 @@
 #include <physics.hpp>
 #include <light.hpp>
 
-Mesh earth;
 Mesh skybox;
 
-Mesh box1;
-Mesh sphere_mesh;
-Mesh defaultPlane;
-Mesh monkey;
-
-MeshRenderer plane_renderer;
-MeshRenderer box1_renderer;
+MeshRenderer planeRenderer;
+MeshRenderer cubeRenderer;
 
 Material defaultMaterial;
 Material unlitMaterial;
 Material lightMaterial;
 
 Material grassMaterial;
+Material metalFloorMaterial;
 
 Entity player_ent;
 Entity box1_ent;
@@ -40,13 +35,14 @@ GameScene::GameScene()
 {
 
 }
+
 void GameScene::Start()
 {
-	Mesh CubeMesh = graphics::loadModel("assets/models/Cube.glb");
-	Mesh SphereMesh = graphics::loadModel("assets/models/Sphere.glb");
-	Mesh testMesh = graphics::loadModel("assets/models/Cube.glb");
+	Mesh planeMesh = renderer.getMeshFromDir("Plane.glb");
+	Mesh cubeMesh = renderer.getMeshFromDir("Cube.glb");
 
-	defaultMaterial.diffuse = vec3(1.0f);
+
+	defaultMaterial.diffuse = vec4(1.0f);
 	defaultMaterial.diffuseMap = graphics::LoadTexture("assets/container.png");
 	defaultMaterial.specularMap = graphics::LoadTexture("assets/specular2.png");
 	defaultMaterial.shader = 6;
@@ -57,48 +53,46 @@ void GameScene::Start()
 	grassMaterial.shininess = 32.0f;
 	grassMaterial.shader = 6;
 
-	unlitMaterial.diffuse = vec3(1.0f);
+	metalFloorMaterial.diffuseMap = graphics::LoadTexture("assets/metal.png");
+	metalFloorMaterial.specularMap = graphics::LoadTexture("assets/metal_specular.png");
+	metalFloorMaterial.specular = vec3(2.0f);
+	metalFloorMaterial.shininess = 32.0f;
+	metalFloorMaterial.shader = 6;
+
+	unlitMaterial.diffuse = vec4(1.0f);
 	unlitMaterial.shader = 3;
+
+	planeRenderer.mesh = cubeMesh;
+	planeRenderer.material = metalFloorMaterial;
+
+	cubeRenderer.mesh = cubeMesh;
+	cubeRenderer.material = defaultMaterial;
 
 	player.entity.transform.scale = vec3(1.0f, 1.0f, 1.0f);
 	player.entity.AddComponent<Rigidbody>();
 	player.entity.AddComponent<Collider>();
-	player.entity.GetComponent<Collider>()->scale = vec3(1.0f, 1.0f, 1.0f);
+	player.entity.GetComponent<Collider>()->scale = vec3(1.0f, 3.0f, 1.0f);
 	player.entity.name = "Player";
-
-	//defaultPlane = graphics::loadModel("assets/models/Plane.glb");
-	defaultPlane = CubeMesh;
+	
 	plane_ent.transform.position = vec3(0.0f, 0.0f, 0.0f);
 	plane_ent.transform.scale = vec3(20.0f, 20.0f, 20.0f);
+	plane_ent.AddComponent<MeshRenderer>(planeRenderer);
+	plane_ent.AddComponent<Collider>();
+	plane_ent.GetComponent<Collider>()->scale = vec3(20.0f, 20.0f, 20.0f);
 	plane_ent.name = "Floor";
 
-	box1 = CubeMesh;
 	box1_ent.transform.position = vec3(5.0f, 15.0f, 0.0f);
 	box1_ent.transform.scale = vec3(1.0f, 1.0f, 1.0f);
-
+	box1_ent.AddComponent<MeshRenderer>(cubeRenderer);
+	box1_ent.AddComponent<Collider>();
+	box1_ent.AddComponent<Rigidbody>();
+	box1_ent.GetComponent<Collider>()->scale = vec3(1.0f, 1.0f, 1.0f);
 	box1_ent.name = "Box";
 
-	Mesh lightMesh = SphereMesh;
 	light_ent.AddComponent<Light>();
 	light_ent.GetComponent<Light>()->diffuse = vec3(1.0f);
 	light_ent.transform.position = vec3(5.0f, 15.0f, 0.0f);
 	light_ent.name = "Light";
-
-
-	plane_renderer.mesh = &defaultPlane;
-	
-	plane_renderer.material = grassMaterial;
-	box1_renderer.material = defaultMaterial;
-
-	plane_ent.AddComponent<MeshRenderer>(plane_renderer);
-	
-
-	plane_ent.AddComponent<Collider>();
-	plane_ent.GetComponent<Collider>()->scale = vec3(40.0f, 40.0f, 40.0f);
-
-	box1_ent.AddComponent<Collider>();
-	box1_ent.AddComponent<Rigidbody>();
-	box1_ent.GetComponent<Collider>()->scale = vec3(1.0f, 2.0f, 1.0f);
 
 	currentScene.skybox_ent = new Entity();
 	currentScene.skybox_ent->name = "Sky";
@@ -108,7 +102,7 @@ void GameScene::Start()
 	skyboxMaterial.diffuseMap = graphics::LoadTexture("assets/sky.jpg");
 
 	currentScene.skybox_ent->AddComponent<MeshRenderer>();
-	currentScene.skybox_ent->GetComponent<MeshRenderer>()->mesh = &skybox;
+	currentScene.skybox_ent->GetComponent<MeshRenderer>()->mesh = skybox;
 	currentScene.skybox_ent->GetComponent<MeshRenderer>()->material = skyboxMaterial;
 
 	currentScene.skybox_ent->transform.position = vec3(0.0f, 0.0f, 0.0f);
@@ -118,22 +112,13 @@ void GameScene::Start()
 	currentScene.sceneLighting.ambient = vec3(0.1f);
 
 	Instantiate(&player.entity);
-	
 	Instantiate(&plane_ent);
-	box1_renderer.mesh = &box1;
+	//plane_ent.GetComponent<MeshRenderer>()->mesh = cubeMesh;
 	Instantiate(&box1_ent);
-	box1_ent.AddComponent<MeshRenderer>(box1_renderer);
 	Instantiate(&light_ent);
 	currentScene.lights.push_back(light_ent.GetComponent<Light>());
 
 	Instantiate(*&currentScene.skybox_ent);
-
-	testEntity = new Entity();
-	
-	testEntity->AddComponent<MeshRenderer>();
-	testEntity->GetComponent<MeshRenderer>()->mesh = &testMesh;
-	testEntity->transform.position = vec3(0.0f, 15.0f, 0.0f);
-	Instantiate(testEntity);
 }
 
 void GameScene::Update()

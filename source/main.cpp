@@ -60,11 +60,11 @@ void init()
         std::cout << "Failed to initialize GLAD" << std::endl;
     }
 
+    renderer.init();
     sceneManager.openScene(gameScene);
     editor.init();
     cam.init();
     player.init();
-    renderer.init();
 }
 
 void GameLoop()
