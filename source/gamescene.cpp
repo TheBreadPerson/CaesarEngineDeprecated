@@ -8,12 +8,16 @@
 #include <globals.hpp>
 #include <physics.hpp>
 #include <light.hpp>
+#include <asset_manager.hpp>
 
 Mesh skybox;
 
 MeshRenderer planeRenderer;
 MeshRenderer cubeRenderer;
 MeshRenderer wallRenderer;
+
+Shader defaultShader;
+Shader unlitShader;
 
 Material defaultMaterial;
 Material wallpaperMaterial;
@@ -41,33 +45,37 @@ GameScene::GameScene()
 
 void GameScene::Start()
 {
-	Mesh planeMesh = renderer.getMeshFromDir("Plane.glb");
-	Mesh cubeMesh = renderer.getMeshFromDir("Cube.glb");
+	defaultShader = AssetManager::shader_list["default"];
+	unlitShader = AssetManager::shader_list["unlit"];
+
+	Mesh planeMesh = AssetManager::getMeshFromDir("Plane.glb");
+	Mesh cubeMesh = AssetManager::getMeshFromDir("Cube.glb");
+	Mesh sphereMesh = AssetManager::getMeshFromDir("sphere.glb");
 
 
 	defaultMaterial.diffuse = vec4(1.0f);
-	defaultMaterial.diffuseMap = graphics::LoadTexture("assets/container.png");
-	defaultMaterial.specularMap = graphics::LoadTexture("assets/specular2.png");
-	defaultMaterial.shader = 6;
+	defaultMaterial.diffuseMap = AssetManager::LoadTexture("assets/container.png");
+	defaultMaterial.specularMap = AssetManager::LoadTexture("assets/specular2.png");
+	defaultMaterial.shader = defaultShader;
 
 	wallpaperMaterial.diffuse = vec4(1.0f);
-	wallpaperMaterial.diffuseMap = graphics::LoadTexture("assets/wallpapertest.png");
-	wallpaperMaterial.shader = 6;
+	wallpaperMaterial.diffuseMap = AssetManager::LoadTexture("assets/wallpapertest.png");
+	wallpaperMaterial.shader = defaultShader;
 
-	grassMaterial.diffuseMap = graphics::LoadTexture("assets/realgrass.jpg");
-	grassMaterial.specularMap = graphics::LoadTexture("assets/grassspecular.png");
+	grassMaterial.diffuseMap = AssetManager::LoadTexture("assets/realgrass.jpg");
+	grassMaterial.specularMap = AssetManager::LoadTexture("assets/grassspecular.png");
 	grassMaterial.specular = vec3(2.0f);
 	grassMaterial.shininess = 32.0f;
-	grassMaterial.shader = 6;
+	grassMaterial.shader = defaultShader;
 
-	metalFloorMaterial.diffuseMap = graphics::LoadTexture("assets/Wood.jpg");
-	//metalFloorMaterial.specularMap = graphics::LoadTexture("assets/metal_specular.png");
+	metalFloorMaterial.diffuseMap = AssetManager::LoadTexture("assets/earth.png");
+	//metalFloorMaterial.specularMap = AssetManager::LoadTexture("assets/metal_specular.png");
 	metalFloorMaterial.specular = vec3(2.0f);
 	metalFloorMaterial.shininess = 32.0f;
-	metalFloorMaterial.shader = 6;
+	metalFloorMaterial.shader = defaultShader;
 
 	unlitMaterial.diffuse = vec4(1.0f);
-	unlitMaterial.shader = 3;
+	unlitMaterial.shader = unlitShader;
 
 	planeRenderer.mesh_path = "Cube.glb";
 	planeRenderer.material = metalFloorMaterial;
@@ -113,13 +121,13 @@ void GameScene::Start()
 
 	currentScene.skybox_ent = new Entity();
 	currentScene.skybox_ent->name = "Sky";
-	skybox = graphics::loadModel("assets/models/sphere.glb");
+	skybox = AssetManager::loadModel("assets/models/sphere.glb");
 
 	Material skyboxMaterial = unlitMaterial;
-	skyboxMaterial.diffuseMap = graphics::LoadTexture("assets/sky.jpg");
+	skyboxMaterial.diffuseMap = AssetManager::LoadTexture("assets/sky.jpg");
 
 	currentScene.skybox_ent->AddComponent<MeshRenderer>();
-	currentScene.skybox_ent->GetComponent<MeshRenderer>()->mesh = skybox;
+	currentScene.skybox_ent->GetComponent<MeshRenderer>()->mesh_path = "sphere.glb";
 	currentScene.skybox_ent->GetComponent<MeshRenderer>()->material = skyboxMaterial;
 
 	currentScene.skybox_ent->transform.position = vec3(0.0f, 0.0f, 0.0f);

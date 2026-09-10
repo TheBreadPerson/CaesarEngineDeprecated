@@ -14,20 +14,32 @@ namespace shader
     {
         glUseProgram(ID);
     }
+    enum ShaderType
+    {
+        DEFAULT,
+        UNLIT
+    };
 }
 
 class Shader
 {
 public:
     unsigned int ID;
+    shader::ShaderType shaderType = shader::DEFAULT;
     const char* vertexShaderPath;
     const char* fragmentShaderPath;
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
-    Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr)
+    Shader()
+    {
+
+    }
+
+    Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr, shader::ShaderType _shaderType = shader::DEFAULT)
     {
         vertexShaderPath = vertexPath;
         fragmentShaderPath = fragmentPath;
+        shaderType = _shaderType;
         // 1. retrieve the vertex/fragment source code from filePath
         std::ifstream vShaderFile;
         std::ifstream fShaderFile;

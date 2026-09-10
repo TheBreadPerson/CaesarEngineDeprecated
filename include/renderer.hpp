@@ -10,6 +10,7 @@
 #include <iostream>
 #include <algorithm>
 #include <stdio.h>
+#include <asset_manager.hpp>
 
 using namespace glm;
 
@@ -40,7 +41,7 @@ public:
 			{
 				return;
 			}
-			Mesh render_mesh = getMeshFromDir(entity.GetComponent<MeshRenderer>()->mesh_path.c_str());
+			Mesh render_mesh = AssetManager::getMeshFromDir(entity.GetComponent<MeshRenderer>()->mesh_path.c_str());
 			drawMesh(&render_mesh);
 			//drawMesh(&entity.GetComponent<MeshRenderer>()->mesh);
 		}
@@ -49,23 +50,6 @@ public:
 			std::cerr << "Entity " << entity.name << " does not have a MeshRenderer component" << std::endl;
 		}
 	}
-
-	Mesh getMeshFromDir(const char* mesh_dir)
-	{
-		std::string mesh_name = mesh_dir;
-		auto it = std::find(mesh_dirs.begin(), mesh_dirs.end(), mesh_name);
-		if (it != mesh_dirs.end())
-		{
-			size_t index = it - mesh_dirs.begin();
-			return meshes[index];
-		}
-		else
-		{
-			std::cout << "ERROR: MESH NOT FOUND" << std::endl;
-		}
-		return Mesh();
-	}
-
 	void reloadShaders();
 
 private:

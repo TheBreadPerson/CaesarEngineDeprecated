@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <shader.hpp>
+#include <asset_manager.hpp>
 
 #include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/core.hpp>
@@ -22,7 +23,7 @@ Mesh::Mesh(const std::vector<Vertex>& verts, const std::vector<unsigned int>& in
 
 fastgltf::Parser parser;
 
-Mesh graphics::loadModel(std::filesystem::path path)
+Mesh AssetManager::loadModel(std::filesystem::path path)
 {
 	Mesh gltfMesh;
 
@@ -134,7 +135,7 @@ void MeshRenderer::setMesh(const char* _mesh_path)
 }
 
 
-unsigned int graphics::LoadTexture(const char* filepath)
+unsigned int AssetManager::LoadTexture(const char* filepath)
 {
 	unsigned int texture;
 

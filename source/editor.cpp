@@ -31,9 +31,6 @@ ImGuiWindowFlags movable = ImGuiWindowFlags_NoResize;
 
 void Editor::init()
 {
-	Mesh loaded_cube = graphics::loadModel("assets/models/Cube.glb");
-	cubeMesh = loaded_cube;
-
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
@@ -51,9 +48,6 @@ void Editor::init()
 	components.push_back("Light");
 	components.push_back("Collider");
 	components.push_back("Rigidbody");
-
-	material.shader = 3;
-	material.diffuse = vec4(1.0f);
 }
 
 Entity* CreateLight()
@@ -107,7 +101,8 @@ void EntityCreateMenu()
 		if (selectedItem == 0)
 		{
 			// Add MeshRenderer
-			newRenderer.mesh = cubeMesh;
+			newRenderer.mesh_path = "Cube.glb";
+			material.shader = AssetManager::shader_list["unlit"];
 			newRenderer.material = material;
 			selectedEntity->AddComponent<MeshRenderer>(newRenderer);
 		}
@@ -133,22 +128,10 @@ void EntityCreateMenu()
 	ImGui::End();
 }
 
-//static int TextCallback(const char* buffer, MeshRenderer* meshRenderer)//ImGuiInputTextCallbackData* data)
-//{
-//	//MeshRenderer* meshRenderer = (MeshRenderer*)data->UserData;
-//	if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit)
-//	{
-//		const char* current_text = data->Buf;
-//		//if (renderer.getMeshFromDir(current_text).vertices.size() > 0) meshRenderer->setMesh(renderer.getMeshFromDir(current_text));
-//		if (renderer.getMeshFromDir(current_text).vertices.size() > 0) meshRenderer->setMesh(current_text);
-//	}
-//	return 0;
-//}
-
 static int EnterMesh(const char* current_text, MeshRenderer* meshRenderer)//ImGuiInputTextCallbackData* data)
 {
 	//if (renderer.getMeshFromDir(current_text).vertices.size() > 0) meshRenderer->setMesh(renderer.getMeshFromDir(current_text));
-	if (renderer.getMeshFromDir(current_text).vertices.size() > 0) meshRenderer->setMesh(current_text);
+	if (AssetManager::getMeshFromDir(current_text).vertices.size() > 0) meshRenderer->setMesh(current_text);
 	return 0;
 }
 
@@ -195,55 +178,59 @@ void InspectorMenu()
 		// Display the index
 		ImGui::Text("ID: %d", index);
 
-		ImGui::Text("Transform");
-		ImGui::DragFloat3("Position", &selectedEntity->transform.position.x, 0.1f);
-		ImGui::DragFloat3("Rotation", &selectedEntity->transform.rotation.x, 0.1f);
-		ImGui::DragFloat3("Size", &selectedEntity->transform.scale.x, 0.1f);
+		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::DragFloat3("Position", &selectedEntity->transform.position.x, 0.1f);
+			ImGui::DragFloat3("Rotation", &selectedEntity->transform.rotation.x, 0.1f);
+			ImGui::DragFloat3("Size", &selectedEntity->transform.scale.x, 0.1f);
+		}
+		
+		
 		if (selectedEntity->HasComponent<MeshRenderer>())
 		{
 			static char buffer[128] = "";
 			ImGuiInputTextFlags flags = ImGuiInputTextFlags_CallbackEdit;
 			MeshRenderer* meshRenderer = selectedEntity->GetComponent<MeshRenderer>();
-			ImGui::Text("MeshRenderer");
-			ImGui::Text("Mesh");
-			//ImGui::InputText("Cube.glb", buffer, IM_ARRAYSIZE(buffer), flags, TextCallback, &meshRenderer);
-			if (ImGui::InputText("Cube.glb", buffer, IM_ARRAYSIZE(buffer), ImGuiInputTextFlags_EnterReturnsTrue))
+			if (ImGui::CollapsingHeader("MeshRenderer", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				EnterMesh(buffer, meshRenderer);
+				ImGui::Text("Mesh");
+				//ImGui::InputText("Cube.glb", buffer, IM_ARRAYSIZE(buffer), flags, TextCallback, &meshRenderer);
+				if (ImGui::InputText("Cube.glb", buffer, IM_ARRAYSIZE(buffer), ImGuiInputTextFlags_EnterReturnsTrue))
+				{
+					EnterMesh(buffer, meshRenderer);
+				}
+				ImGui::Text("Material");
+				//ImGui::InputText("Shader", (char*)meshRenderer->material.shader, 256);
+				ImGui::ColorEdit3("Diffuse", &meshRenderer->material.diffuse.x);
+				ImGui::ColorEdit3("Specular", &meshRenderer->material.specular.x);
+				//ImGui::ColorEdit3("Ambient", meshRenderer->material.ambient);
+				ImGui::SliderFloat("Shininess", &meshRenderer->material.shininess, 0.0f, 256.0f);
 			}
-			ImGui::Text("Material");
-			//ImGui::InputText("Shader", (char*)meshRenderer->material.shader, 256);
-			ImGui::ColorEdit3("Diffuse", &meshRenderer->material.diffuse.x);
-			ImGui::ColorEdit3("Specular", &meshRenderer->material.specular.x);
-			//ImGui::ColorEdit3("Ambient", meshRenderer->material.ambient);
-			ImGui::SliderFloat("Shininess", &meshRenderer->material.shininess, 0.0f, 256.0f);
 		}
 		if (selectedEntity->HasComponent<Light>())
 		{
 			Light* light = selectedEntity->GetComponent<Light>();
-			ImGui::Text("Light");
-			ImGui::SameLine();
-			if (ImGui::Button("Delete Light"))
+			if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				currentScene.lights.erase(std::remove(currentScene.lights.begin(), currentScene.lights.end(), light), currentScene.lights.end());
-				selectedEntity->RemoveComponent<Light>();
+				float lightColor[3] = { light->diffuse.r, light->diffuse.g, light->diffuse.b };
+				ImGui::ColorEdit3("Light Color", lightColor);
+				light->diffuse.r = lightColor[0];
+				light->diffuse.g = lightColor[1];
+				light->diffuse.b = lightColor[2];
+				ImGui::SliderFloat("Intensity", &light->intensity, 0.0f, 20.0f);
+				ImGui::SliderFloat("Radius", &light->radius, 0.0f, 100.0f);
 			}
-			float lightColor[3] = { light->diffuse.r, light->diffuse.g, light->diffuse.b };
-			ImGui::ColorEdit3("Light Color", lightColor);
-			light->diffuse.r = lightColor[0];
-			light->diffuse.g = lightColor[1];
-			light->diffuse.b = lightColor[2];
-			ImGui::SliderFloat("Intensity", &light->intensity, 0.0f, 20.0f);
-			ImGui::SliderFloat("Radius", &light->radius, 0.0f, 100.0f);
 		}
 
 		if (selectedEntity->HasComponent<Collider>())
 		{
 			Collider* collider = selectedEntity->GetComponent<Collider>();
-			ImGui::Text("Collider");
-			ImGui::DragFloat3("Scale", &selectedEntity->GetComponent<Collider>()->scale.x, 0.1f);
+			if (ImGui::CollapsingHeader("Collider", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::DragFloat3("Scale", &selectedEntity->GetComponent<Collider>()->scale.x, 0.1f);
 
-			ImGui::DragFloat3("Offset", &selectedEntity->GetComponent<Collider>()->offset.x, 0.1f);
+				ImGui::DragFloat3("Offset", &selectedEntity->GetComponent<Collider>()->offset.x, 0.1f);
+			}
 		}
 	}
 	ImGui::End();

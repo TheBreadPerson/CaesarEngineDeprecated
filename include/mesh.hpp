@@ -7,6 +7,7 @@
 #include <memory>
 #include <unordered_map>
 #include <stdio.h>
+#include <shader.hpp>
 
 
 struct Vertex
@@ -18,7 +19,8 @@ struct Vertex
 };
 struct Material
 {
-	unsigned int shader = 6;
+	//unsigned int shader = 6;
+	Shader shader;
 	glm::vec3 emission;
 	unsigned int emissionMap;
 	glm::vec3 diffuse;
@@ -55,9 +57,3 @@ public:
 	Material material;
 	void setMesh(const char* _mesh_path);
 };
-
-namespace graphics
-{
-	unsigned int LoadTexture(const char* filepath);
-	Mesh loadModel(std::filesystem::path path);
-}
