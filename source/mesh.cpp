@@ -134,6 +134,11 @@ void MeshRenderer::setMesh(const char* _mesh_path)
 	mesh_path = _mesh_path;
 }
 
+void MeshRenderer::setShader(const char* _shader_name)
+{
+	material.shader = AssetManager::shader_list[_shader_name];
+}
+
 
 unsigned int AssetManager::LoadTexture(const char* filepath)
 {

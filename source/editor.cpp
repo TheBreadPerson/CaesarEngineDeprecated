@@ -135,6 +135,13 @@ static int EnterMesh(const char* current_text, MeshRenderer* meshRenderer)//ImGu
 	return 0;
 }
 
+static int EnterShader(const char* current_text, MeshRenderer* meshRenderer)//ImGuiInputTextCallbackData* data)
+{
+	//if (renderer.getMeshFromDir(current_text).vertices.size() > 0) meshRenderer->setMesh(renderer.getMeshFromDir(current_text));
+	if (AssetManager::getShaderFromName(current_text).ID != 0) meshRenderer->setShader(current_text);
+	return 0;
+}
+
 void InspectorMenu()
 {
 	ImGui::Begin("Inspector", nullptr, immobile);
@@ -188,19 +195,25 @@ void InspectorMenu()
 		
 		if (selectedEntity->HasComponent<MeshRenderer>())
 		{
-			static char buffer[128] = "";
+			
 			ImGuiInputTextFlags flags = ImGuiInputTextFlags_CallbackEdit;
 			MeshRenderer* meshRenderer = selectedEntity->GetComponent<MeshRenderer>();
 			if (ImGui::CollapsingHeader("MeshRenderer", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				ImGui::Text("Mesh");
-				//ImGui::InputText("Cube.glb", buffer, IM_ARRAYSIZE(buffer), flags, TextCallback, &meshRenderer);
-				if (ImGui::InputText("Cube.glb", buffer, IM_ARRAYSIZE(buffer), ImGuiInputTextFlags_EnterReturnsTrue))
+				ImGui::SeparatorText("Mesh");
+				static char mesh_buffer[128] = "";
+				if (ImGui::InputText("Mesh Name", mesh_buffer, IM_ARRAYSIZE(mesh_buffer), ImGuiInputTextFlags_EnterReturnsTrue))
 				{
-					EnterMesh(buffer, meshRenderer);
+					EnterMesh(mesh_buffer, meshRenderer);
 				}
-				ImGui::Text("Material");
-				//ImGui::InputText("Shader", (char*)meshRenderer->material.shader, 256);
+
+				ImGui::SeparatorText("Material");
+				static char shader_buffer[128] = "";
+				if (ImGui::InputText("Shader Name", shader_buffer, IM_ARRAYSIZE(shader_buffer), ImGuiInputTextFlags_EnterReturnsTrue))
+				{
+					EnterShader(shader_buffer, meshRenderer);
+				}
+				// this should loop through exposed uniforms 
 				ImGui::ColorEdit3("Diffuse", &meshRenderer->material.diffuse.x);
 				ImGui::ColorEdit3("Specular", &meshRenderer->material.specular.x);
 				//ImGui::ColorEdit3("Ambient", meshRenderer->material.ambient);

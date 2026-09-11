@@ -56,4 +56,5 @@ public:
 	std::string mesh_path;
 	Material material;
 	void setMesh(const char* _mesh_path);
+	void setShader(const char* _shader_name);
 };
