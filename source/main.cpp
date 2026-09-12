@@ -9,6 +9,7 @@
 #include "scene.hpp"
 #include "gamescene.hpp"
 #include "editor.hpp"
+#include "asset_manager.hpp"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -60,6 +61,9 @@ void init()
         std::cout << "Failed to initialize GLAD" << std::endl;
     }
 
+    AssetManager::load_all_shaders();
+    AssetManager::load_all_materials();
+    AssetManager::load_all_meshes();
     renderer.init();
     sceneManager.openScene(gameScene);
     editor.init();

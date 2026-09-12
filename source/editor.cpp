@@ -9,6 +9,7 @@
 #include <inputs.hpp>
 #include <vector>
 #include <string>
+#include <asset_manager.hpp>
 
 float color[3] = { 0, 0, 0 };
 float intensity, radius;
@@ -56,7 +57,7 @@ Entity* CreateLight()
 	lightEntity->transform.position = player.entity.transform.position;
 	lightEntity->AddComponent<Light>();
 	lightEntity->GetComponent<Light>()->diffuse = vec3(1.0f);
-	//currentScene.lights.push_back(lightEntity->GetComponent<Light>());
+	//sceneManager.currentScene->sceneData.lights.push_back(lightEntity->GetComponent<Light>());
 	Instantiate(lightEntity);
 	return lightEntity;
 }
@@ -70,7 +71,7 @@ void LightMenu()
 	}
 	if (ImGui::Button("Delete Light"))
 	{
-		// Remove activeLight from currentScene.lights
+		// Remove activeLight from sceneManager.currentScene->sceneData.lights
 
 	}
 
@@ -93,7 +94,7 @@ void EntityCreateMenu()
 		// Add the new entity to the scene
 		Instantiate(newEntity);
 		selectedEntity = newEntity;
-		entitySelected = currentScene.entityList.size() - 1;
+		entitySelected = sceneManager.currentScene->sceneData.entityList.size() - 1;
 	}
 
 	if (ImGui::Combo("Add Component", &selectedItem, components.data(), components.size()))
@@ -102,21 +103,20 @@ void EntityCreateMenu()
 		{
 			// Add MeshRenderer
 			newRenderer.mesh_path = "Cube.glb";
-			material.shader = AssetManager::shader_list["unlit"];
-			newRenderer.material = material;
+			newRenderer.material_path = "default_material.json";
 			selectedEntity->AddComponent<MeshRenderer>(newRenderer);
 		}
 		else if (selectedItem == 1)
 		{
 			// Add Light
 			selectedEntity->AddComponent<Light>();
-			currentScene.lights.push_back(selectedEntity->GetComponent<Light>());
+			sceneManager.currentScene->sceneData.lights.push_back(selectedEntity->GetComponent<Light>());
 		}
 		else if (selectedItem == 2)
 		{
 			// Add Collider
 			selectedEntity->AddComponent<Collider>();
-			currentScene.entityList.back()->GetComponent<Collider>()->scale;
+			sceneManager.currentScene->sceneData.entityList.back()->GetComponent<Collider>()->scale;
 		}
 		else if (selectedItem == 3)
 		{
@@ -138,7 +138,7 @@ static int EnterMesh(const char* current_text, MeshRenderer* meshRenderer)//ImGu
 static int EnterShader(const char* current_text, MeshRenderer* meshRenderer)//ImGuiInputTextCallbackData* data)
 {
 	//if (renderer.getMeshFromDir(current_text).vertices.size() > 0) meshRenderer->setMesh(renderer.getMeshFromDir(current_text));
-	if (AssetManager::getShaderFromName(current_text).ID != 0) meshRenderer->setShader(current_text);
+	if (AssetManager::getShaderFromName(current_text).ID != 0) meshRenderer->material.setShader(current_text);
 	return 0;
 }
 
@@ -148,27 +148,27 @@ void InspectorMenu()
 	ImVec2 windowSize = ImGui::GetWindowSize();
 	ImGui::SetWindowPos(ImVec2(screen_width-windowSize.x, 0));
 
-	if (!currentScene.entityList.empty())
+	if (!sceneManager.currentScene->sceneData.entityList.empty())
 	{
 		if (Input::GetKeyDown(KeyCode::RIGHT))
 		{
-			entitySelected = (entitySelected + 1) % currentScene.entityList.size();
+			entitySelected = (entitySelected + 1) % sceneManager.currentScene->sceneData.entityList.size();
 			std::cout << entitySelected << std::endl;
 		}
 		if (Input::GetKeyDown(KeyCode::LEFT))
 		{
 			if (entitySelected == 0) 
 			{
-				entitySelected = currentScene.entityList.size() - 1;
+				entitySelected = sceneManager.currentScene->sceneData.entityList.size() - 1;
 			}
 			else 
 			{
-				entitySelected = (entitySelected - 1) % currentScene.entityList.size();
+				entitySelected = (entitySelected - 1) % sceneManager.currentScene->sceneData.entityList.size();
 			}
 
 			std::cout << entitySelected << std::endl;
 		}
-		selectedEntity = currentScene.entityList[entitySelected];
+		selectedEntity = sceneManager.currentScene->sceneData.entityList[entitySelected];
 
 		// Display entity name as input field
 		char name[256];
@@ -179,8 +179,8 @@ void InspectorMenu()
 		}
 		ImGui::SameLine();
 		
-		auto it = std::find(currentScene.entityList.begin(), currentScene.entityList.end(), selectedEntity);
-		int index = std::distance(currentScene.entityList.begin(), it);
+		auto it = std::find(sceneManager.currentScene->sceneData.entityList.begin(), sceneManager.currentScene->sceneData.entityList.end(), selectedEntity);
+		int index = std::distance(sceneManager.currentScene->sceneData.entityList.begin(), it);
 
 		// Display the index
 		ImGui::Text("ID: %d", index);
@@ -253,11 +253,11 @@ void SceneMenu()
 {
 	ImGui::Begin("Scene");
 	ImGui::Text("Count");
-	ImGui::Text("Entities: %d", currentScene.entityList.size());
-	ImGui::Text("Lights: %d", currentScene.lights.size());
+	ImGui::Text("Entities: %d", sceneManager.currentScene->sceneData.entityList.size());
+	ImGui::Text("Lights: %d", sceneManager.currentScene->sceneData.lights.size());
 	ImGui::Text("Lighting");
 	ImGui::Text("Light");
-	ImGui::ColorEdit3("Ambient Light", &currentScene.sceneLighting.ambient.x);
+	ImGui::ColorEdit3("Ambient Light", &sceneManager.currentScene->sceneData.sceneLighting.ambient.x);
 	ImGui::End();
 }
 

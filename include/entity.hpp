@@ -88,6 +88,16 @@ public:
     {
         return components.find(typeid(T)) != components.end();
     }
+
+    bool hasComponents()
+    {
+        return !components.empty();
+    }
+
+    std::unordered_map<std::type_index, std::shared_ptr<Component>> getComponents()
+    {
+        return components;
+    }
 };
 
 Entity* Instantiate(Entity* entity);

@@ -9,8 +9,8 @@ Entity* Instantiate(Entity* entity)
 {
 	if (entity->GetComponent<Light>())
 	{
-		currentScene.lights.push_back(entity->GetComponent<Light>());
+		sceneManager.currentScene->sceneData.lights.push_back(entity->GetComponent<Light>());
 	}
-	currentScene.entityList.push_back(entity);
-	return currentScene.entityList.back();
+	sceneManager.currentScene->sceneData.entityList.push_back(entity);
+	return sceneManager.currentScene->sceneData.entityList.back();
 }

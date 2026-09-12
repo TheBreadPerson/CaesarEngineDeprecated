@@ -3,13 +3,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <renderer.hpp>
 #include <player.hpp>
 #include <camera.hpp>
 #include <editor.hpp>
 
 
-
+class Renderer;
 
 extern GLFWwindow* window;
 extern Camera cam;

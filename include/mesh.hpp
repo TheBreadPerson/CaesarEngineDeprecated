@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <shader.hpp>
 
-
 struct Vertex
 {
 	glm::vec3 position;
@@ -19,15 +18,21 @@ struct Vertex
 };
 struct Material
 {
-	//unsigned int shader = 6;
+	std::string shader_path;
 	Shader shader;
+
 	glm::vec3 emission;
 	unsigned int emissionMap;
+
 	glm::vec3 diffuse;
-	unsigned int diffuseMap;
+	std::string diffuse_path;
+	unsigned int diffuse_map = 0;
+
 	glm::vec3 specular;
 	unsigned int specularMap;
 	float shininess;
+
+	void setShader(const char* _shader_name);
 
 	Material() :
 		emission(0.1f),
@@ -35,6 +40,8 @@ struct Material
 		specular(0.1f),
 		shininess(32.0f)
 	{}
+
+	void save(const char* save_path);
 };
 
 struct Mesh
@@ -54,7 +61,8 @@ class MeshRenderer : public Component
 public:
     Mesh mesh;
 	std::string mesh_path;
+	std::string material_path; // Only for saving!
 	Material material;
 	void setMesh(const char* _mesh_path);
-	void setShader(const char* _shader_name);
+	void setMaterial(const char* _material_path);
 };

@@ -16,9 +16,6 @@ MeshRenderer planeRenderer;
 MeshRenderer cubeRenderer;
 MeshRenderer wallRenderer;
 
-Shader defaultShader;
-Shader unlitShader;
-
 Material defaultMaterial;
 Material wallpaperMaterial;
 Material unlitMaterial;
@@ -45,46 +42,42 @@ GameScene::GameScene()
 
 void GameScene::Start()
 {
-	defaultShader = AssetManager::shader_list["default"];
-	unlitShader = AssetManager::shader_list["unlit"];
+	name = "game";
 
-	Mesh planeMesh = AssetManager::getMeshFromDir("Plane.glb");
-	Mesh cubeMesh = AssetManager::getMeshFromDir("Cube.glb");
-	Mesh sphereMesh = AssetManager::getMeshFromDir("sphere.glb");
-
-
-	defaultMaterial.diffuse = vec4(1.0f);
-	defaultMaterial.diffuseMap = AssetManager::LoadTexture("assets/container.png");
-	defaultMaterial.specularMap = AssetManager::LoadTexture("assets/specular2.png");
-	defaultMaterial.shader = defaultShader;
+	//defaultMaterial.diffuse = vec4(1.0f);
+	//defaultMaterial.diffuse_path = "assets/container.png";
+	////defaultMaterial.specularMap = AssetManager::LoadTexture("assets/specular2.png");
+	//defaultMaterial.setShader("default");
+	//defaultMaterial.save("assets/materials/default_material.json");
 
 	wallpaperMaterial.diffuse = vec4(1.0f);
-	wallpaperMaterial.diffuseMap = AssetManager::LoadTexture("assets/wallpapertest.png");
-	wallpaperMaterial.shader = defaultShader;
+	wallpaperMaterial.diffuse_path = "assets/wallpapertest.png";
+	wallpaperMaterial.shader_path = "default";
+	wallpaperMaterial.shader = AssetManager::shader_list[wallpaperMaterial.shader_path];
 
-	grassMaterial.diffuseMap = AssetManager::LoadTexture("assets/realgrass.jpg");
+	grassMaterial.diffuse_path = "assets/realgrass.jpg";
 	grassMaterial.specularMap = AssetManager::LoadTexture("assets/grassspecular.png");
 	grassMaterial.specular = vec3(2.0f);
 	grassMaterial.shininess = 32.0f;
-	grassMaterial.shader = defaultShader;
+	grassMaterial.setShader("default");
+	grassMaterial.save("assets/materials/grass_material.json");
 
-	metalFloorMaterial.diffuseMap = AssetManager::LoadTexture("assets/earth.png");
-	//metalFloorMaterial.specularMap = AssetManager::LoadTexture("assets/metal_specular.png");
+	metalFloorMaterial.diffuse_path = "assets/earth.png";
 	metalFloorMaterial.specular = vec3(2.0f);
 	metalFloorMaterial.shininess = 32.0f;
-	metalFloorMaterial.shader = defaultShader;
+	metalFloorMaterial.setShader("default");
 
 	unlitMaterial.diffuse = vec4(1.0f);
-	unlitMaterial.shader = unlitShader;
+	unlitMaterial.setShader("unlit");
 
 	planeRenderer.mesh_path = "Cube.glb";
-	planeRenderer.material = metalFloorMaterial;
+	planeRenderer.material = grassMaterial;;
 
 	cubeRenderer.mesh_path = "sphere.glb";
-	cubeRenderer.material = defaultMaterial;
+	cubeRenderer.setMaterial("default_material.json");
 
 	wallRenderer.mesh_path = "Cube.glb";
-	wallRenderer.material = wallpaperMaterial;
+	wallRenderer.setMaterial("default_material.json");
 
 	player.entity.transform.scale = vec3(1.0f, 1.0f, 1.0f);
 	player.entity.AddComponent<Rigidbody>();
@@ -119,46 +112,48 @@ void GameScene::Start()
 	light_ent.transform.position = vec3(5.0f, 15.0f, 0.0f);
 	light_ent.name = "Light";
 
-	currentScene.skybox_ent = new Entity();
-	currentScene.skybox_ent->name = "Sky";
+	sceneData.skybox_ent = new Entity();
+	sceneData.skybox_ent->name = "Sky";
 	skybox = AssetManager::loadModel("assets/models/sphere.glb");
 
 	Material skyboxMaterial = unlitMaterial;
-	skyboxMaterial.diffuseMap = AssetManager::LoadTexture("assets/sky.jpg");
+	skyboxMaterial.diffuse_path = "assets/sky.jpg";
 
-	currentScene.skybox_ent->AddComponent<MeshRenderer>();
-	currentScene.skybox_ent->GetComponent<MeshRenderer>()->mesh_path = "sphere.glb";
-	currentScene.skybox_ent->GetComponent<MeshRenderer>()->material = skyboxMaterial;
+	sceneData.skybox_ent->AddComponent<MeshRenderer>();
+	sceneData.skybox_ent->GetComponent<MeshRenderer>()->mesh_path = "sphere.glb";
+	sceneData.skybox_ent->GetComponent<MeshRenderer>()->setMaterial("sky_material.json");
+	//sceneData.skybox_ent->GetComponent<MeshRenderer>()->material = skyboxMaterial;
 
-	currentScene.skybox_ent->transform.position = vec3(0.0f, 0.0f, 0.0f);
-	currentScene.skybox_ent->transform.rotation = vec3(0.0f, 0.0f, 0.0f);
-	currentScene.skybox_ent->transform.scale = vec3(200.0f, 200.0f, 200.0f);
+	sceneData.skybox_ent->transform.position = vec3(0.0f, 0.0f, 0.0f);
+	sceneData.skybox_ent->transform.rotation = vec3(0.0f, 0.0f, 0.0f);
+	sceneData.skybox_ent->transform.scale = vec3(200.0f, 200.0f, 200.0f);
 
-	currentScene.sceneLighting.ambient = vec3(0.1f);
+	sceneData.sceneLighting.ambient = vec3(0.1f);
 
 	Instantiate(&player.entity);
 	Instantiate(&plane_ent);
-	//plane_ent.GetComponent<MeshRenderer>()->mesh = cubeMesh;
 	Instantiate(&wall_ent);
 	Instantiate(&box1_ent);
 	Instantiate(&light_ent);
-	currentScene.lights.push_back(light_ent.GetComponent<Light>());
+	sceneData.lights.push_back(light_ent.GetComponent<Light>());
 
-	Instantiate(*&currentScene.skybox_ent);
+	Instantiate(*&sceneData.skybox_ent);
+	std::cout << sceneManager.currentScene->sceneData.entityList.size() << std::endl;
+	sceneManager.saveScene(sceneManager.currentScene);
 }
 
 void GameScene::Update()
 {
 	
-	if (!currentScene.entityList.empty())
+	if (!sceneData.entityList.empty())
 	{
-		for (Entity* object : currentScene.entityList)
+		for (Entity* object : sceneData.entityList)
 		{
 			if (!object->HasComponent<Collider>() || !object->GetComponent<Collider>()->enabled)
 			{
 				continue;
 			}
-			for (Entity* physics_object : currentScene.entityList)
+			for (Entity* physics_object : sceneData.entityList)
 			{
 				if (!physics_object->HasComponent<Rigidbody>() || object == physics_object || !physics_object->GetComponent<Rigidbody>()->enabled)
 				{
@@ -171,14 +166,14 @@ void GameScene::Update()
 	cam.move();
 	player.move();
 	light_ent.transform.position = player.entity.transform.position;
-	currentScene.skybox_ent->transform.position = player.entity.transform.position;
+	sceneData.skybox_ent->transform.position = player.entity.transform.position;
 
 	globe_ent.transform.rotation.x += Time::deltaTime * 5.0f;
 }
 
 void GameScene::FixedUpdate(double deltaTime)
 {
-	for (Entity* physics_object : currentScene.entityList)
+	for (Entity* physics_object : sceneData.entityList)
 	{
 		if (!physics_object->HasComponent<Rigidbody>() || !physics_object->GetComponent<Rigidbody>()->enabled)
 		{

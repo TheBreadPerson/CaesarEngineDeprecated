@@ -16,7 +16,6 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 #include <filesystem>
-#include <asset_manager.hpp>
 
 using namespace glm;
 
@@ -49,10 +48,8 @@ void Renderer::init()
 
 	cam.transform.position = vec3(0.0f, 0.0f, 0.0f);
 
-	const char* models_path = "assets/models/";
-	const char* shaders_path = "assets/shaders/";
 	// Loop through models folder and setup all meshes, added their mesh data to meshes vector
-	if (std::filesystem::exists(models_path) && std::filesystem::is_directory(models_path))
+	/*if (std::filesystem::exists(models_path) && std::filesystem::is_directory(models_path))
 	{
 		for (const auto& entry : std::filesystem::directory_iterator(models_path))
 		{
@@ -65,9 +62,9 @@ void Renderer::init()
 				AssetManager::mesh_list[mesh_dir] = mesh;
 			}
 		}
-	}
+	}*/
 	
-	Shader unlitShader = Shader("assets/shaders/unlit.vert", "assets/shaders/unlit.frag", nullptr, shader::UNLIT);
+	/*Shader unlitShader = Shader("assets/shaders/unlit.vert", "assets/shaders/unlit.frag", nullptr, shader::UNLIT);
 	unlitShader.compile();
 
 	Shader defaultShader = Shader("assets/shaders/default.vert", "assets/shaders/default.frag", nullptr);
@@ -76,18 +73,7 @@ void Renderer::init()
 	unlitShader.use();
 
 	AssetManager::shader_list["default"] = defaultShader;
-	AssetManager::shader_list["unlit"] = unlitShader;
-
-	/*unlitShader.shaderType = shader::UNLIT;
-	defaultShader.shaderType = shader::DEFAULT;
-
-	unlitShader.compile();
-	defaultShader.compile();
-
-	shaders.push_back(&defaultShader);
-	shaders.push_back(&unlitShader);
-
-	unlitShader.use();*/
+	AssetManager::shader_list["unlit"] = unlitShader;*/
 
 	glClearColor(0.01f, 0.01f, 0.01f, 1.0f);
 	glViewport(0, 0, screen_width, screen_height);
@@ -107,82 +93,87 @@ void Renderer::draw(GLFWwindow* window)
 	mat4 projection = perspective(radians(cam.fov), ((float)screen_width / screen_height), 0.01f, 1000.0f);
 	mat4 view = lookAt(cam.transform.position, cam.transform.position + cam.transform.forward, cam.transform.up);
 
-	for (Entity* object : currentScene.entityList)
+	SceneData sceneData = sceneManager.currentScene->sceneData;
+
+	for (Entity* object : sceneData.entityList)
 	{
 		if (!object->HasComponent<MeshRenderer>())
 		{
 			continue;
 		}
 		MeshRenderer* meshRenderer = object->GetComponent<MeshRenderer>();
-
+		if (meshRenderer->material.diffuse_map == 0)
+		{
+			meshRenderer->material.diffuse_map = AssetManager::LoadTexture(meshRenderer->material.diffuse_path.c_str());
+		}
 		Shader* shader = &meshRenderer->material.shader;
-		if (shader == nullptr) continue;
+
 		shader->use();
 
 		// SHADER CONSTANTS
 		shader->setMat4("projection", projection);
 		shader->setMat4("view", view);
-		shader->setVec4("objColor", vec4(object->GetComponent<MeshRenderer>()->material.diffuse, 1.0f));
+		shader->setVec4("objColor", vec4(meshRenderer->material.diffuse, 1.0f));
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, object->GetComponent<MeshRenderer>()->material.diffuseMap);
+		glBindTexture(GL_TEXTURE_2D, meshRenderer->material.diffuse_map);
 		shader->setInt("texture2d", 0);
 		mat4 model = setupTransform(object->transform);
 		shader->setMat4("model", model);
 
-		bool useTexture = (object->GetComponent<MeshRenderer>()->material.diffuseMap != 0);
+		bool useTexture = (meshRenderer->material.diffuse_map != 0);
 		shader->setBool("useTexture", useTexture);
 		// SHADER CONSTANTS
 
 		if (shader->shaderType == shader::DEFAULT)
 		{
 			// Apply scene lighting
-			for (int i = 0; i < currentScene.lights.size(); i++)
+			for (int i = 0; i < sceneData.lights.size(); i++)
 			{
 				std::string lightName = "pointLights[" + std::to_string(i) + "]";
-				if (currentScene.lights[i] != nullptr)
+				if (sceneData.lights[i] != nullptr)
 				{
-					shader->setVec3(lightName + ".position", currentScene.lights[i]->entity->transform.position);
+					shader->setVec3(lightName + ".position", sceneData.lights[i]->entity->transform.position);
 				}
 				else
 				{
 					std::cout << "Light is null" << std::endl;
 				}
-				shader->setVec3(lightName + ".ambient", currentScene.lights[i]->ambient);
-				shader->setVec3(lightName + ".diffuse", currentScene.lights[i]->diffuse);
-				shader->setVec3(lightName + ".specular", currentScene.lights[i]->specular);
+				shader->setVec3(lightName + ".ambient",sceneData.lights[i]->ambient);
+				shader->setVec3(lightName + ".diffuse",sceneData.lights[i]->diffuse);
+				shader->setVec3(lightName + ".specular",sceneData.lights[i]->specular);
 				shader->setFloat(lightName + ".constant", 1.0f);
-				shader->setFloat(lightName + ".linear", 1.0f / currentScene.lights[i]->radius);
-				shader->setFloat(lightName + ".quadratic", 1.0f / pow(currentScene.lights[i]->radius, 2));
-				shader->setFloat(lightName + ".intensity", currentScene.lights[i]->intensity);
+				shader->setFloat(lightName + ".linear", 1.0f / sceneData.lights[i]->radius);
+				shader->setFloat(lightName + ".quadratic", 1.0f / pow(sceneData.lights[i]->radius, 2));
+				shader->setFloat(lightName + ".intensity",sceneData.lights[i]->intensity);
 			}
-			shader->setVec3("sceneLight.ambient", currentScene.sceneLighting.ambient);
+			shader->setVec3("sceneLight.ambient",sceneData.sceneLighting.ambient);
 
 			// Activate and bind the emission map
 			glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
-			glBindTexture(GL_TEXTURE_2D, object->GetComponent<MeshRenderer>()->material.emissionMap); // Bind emission map
+			glBindTexture(GL_TEXTURE_2D, meshRenderer->material.emissionMap); // Bind emission map
 			shader->setInt("material.emissionMap", 0); // Set the sampler uniform to texture unit 0
-			shader->setVec3("material.emission", object->GetComponent<MeshRenderer>()->material.emission);
+			shader->setVec3("material.emission", meshRenderer->material.emission);
 			glActiveTexture(GL_TEXTURE1); // Activate texture unit 1
-			glBindTexture(GL_TEXTURE_2D, object->GetComponent<MeshRenderer>()->material.diffuseMap); // Bind diffuse map
+			glBindTexture(GL_TEXTURE_2D, meshRenderer->material.diffuse_map); // Bind diffuse map
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			shader->setInt("material.diffuseMap", 1); // Set the sampler uniform to texture unit 1
-			shader->setVec3("material.diffuse", object->GetComponent<MeshRenderer>()->material.diffuse);
+			shader->setVec3("material.diffuse", meshRenderer->material.diffuse);
 			// Activate and bind the specular map
 			glActiveTexture(GL_TEXTURE2); // Activate texture unit 2
-			glBindTexture(GL_TEXTURE_2D, object->GetComponent<MeshRenderer>()->material.specularMap); // Bind specular map
+			glBindTexture(GL_TEXTURE_2D, meshRenderer->material.specularMap); // Bind specular map
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			shader->setInt("material.specularMap", 2); // Set the sampler uniform to texture unit 2
-			shader->setVec3("material.specular", object->GetComponent<MeshRenderer>()->material.specular);
+			shader->setVec3("material.specular", meshRenderer->material.specular);
 			// Set shininess value
-			shader->setFloat("material.shininess", object->GetComponent<MeshRenderer>()->material.shininess);
+			shader->setFloat("material.shininess", meshRenderer->material.shininess);
 
-			shader->setBool("useTexture", (object->GetComponent<MeshRenderer>()->material.diffuseMap != 0));
+			shader->setBool("useTexture", (meshRenderer->material.diffuse_map != 0));
 
 			shader->setVec3("viewPos", cam.transform.position);
 		}
-		if (object->GetID() == currentScene.skybox_ent->GetID()) glDepthMask(GL_FALSE); // If object is skybox, disable depth
+		if (object->GetID() ==sceneData.skybox_ent->GetID()) glDepthMask(GL_FALSE); // If object is skybox, disable depth
 		render(*object);
 		glDepthMask(GL_TRUE);
 	}
@@ -191,121 +182,6 @@ void Renderer::draw(GLFWwindow* window)
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	glfwSwapBuffers(window);
 }
-
-//void Renderer::draw(GLFWwindow* window)
-//{
-//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//	if (Input::GetKeyDown(KeyCode::R))
-//	{
-//		//reloadShaders();
-//	}
-//
-//	float timeValue = static_cast<float>(glfwGetTime());
-//
-//	mat4 projection = perspective(radians(cam.fov), ((float)screen_width / screen_height), 0.01f, 1000.0f);
-//	mat4 view = lookAt(cam.transform.position, cam.transform.position + cam.transform.forward, cam.transform.up);
-//
-//	for (Shader* shader : shaders)
-//	{
-//		shader->use();
-//
-//		shader->setMat4("projection", projection);
-//		shader->setMat4("view", view);
-//
-//		for (Entity* object : currentScene.entityList)
-//		{
-//			if (!object->HasComponent<MeshRenderer>())
-//			{
-//				continue;
-//			}
-//			
-//			MeshRenderer* objMesh = object->GetComponent<MeshRenderer>();
-//			//shader->setBool("useTexture", objMesh->hasTexture);
-//			shader->setVec4("objColor", vec4(object->GetComponent<MeshRenderer>()->material.diffuse, 1.0f));
-//			glActiveTexture(GL_TEXTURE0);
-//			glBindTexture(GL_TEXTURE_2D, object->GetComponent<MeshRenderer>()->material.diffuseMap);
-//			shader->setInt("texture2d", 0);
-//
-//			bool useTexture = (object->GetComponent<MeshRenderer>()->material.diffuseMap != 0);
-//			shader->setBool("useTexture", useTexture);
-//
-//			// Replace 3 with MeshRenderer material shader ID
-//			if (shader->ID != object->GetComponent<MeshRenderer>()->material.shader)
-//			{
-//				continue;
-//			}
-//			
-//			mat4 model = setupTransform(object->transform);
-//			shader->setMat4("model", model);
-//
-//			// LIGHTS
-//			if (shader->ID == 6)
-//			{
-//				for (int i = 0; i < currentScene.lights.size(); i++)
-//				{
-//					std::string lightName = "pointLights[" + std::to_string(i) + "]";
-//					if (currentScene.lights[i] != nullptr)
-//					{
-//						shader->setVec3(lightName + ".position", currentScene.lights[i]->entity->transform.position);
-//					}
-//					else
-//					{
-//						std::cout << "Light is null" << std::endl;
-//					}
-//					shader->setVec3(lightName + ".ambient", currentScene.lights[i]->ambient);
-//					shader->setVec3(lightName + ".diffuse", currentScene.lights[i]->diffuse);
-//					shader->setVec3(lightName + ".specular", currentScene.lights[i]->specular);
-//					shader->setFloat(lightName + ".constant", 1.0f);
-//					shader->setFloat(lightName + ".linear", 1.0f/currentScene.lights[i]->radius);
-//					shader->setFloat(lightName + ".quadratic", 1.0f/pow(currentScene.lights[i]->radius, 2));
-//					shader->setFloat(lightName + ".intensity", currentScene.lights[i]->intensity);
-//				}
-//				shader->setVec3("sceneLight.ambient", currentScene.sceneLighting.ambient);
-//			}
-//
-//			// MATERIAL HERE
-//			if (shader->ID == 6)
-//			{
-//				// Activate and bind the emission map
-//				glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
-//				glBindTexture(GL_TEXTURE_2D, object->GetComponent<MeshRenderer>()->material.emissionMap); // Bind emission map
-//				shader->setInt("material.emissionMap", 0); // Set the sampler uniform to texture unit 0
-//				shader->setVec3("material.emission", object->GetComponent<MeshRenderer>()->material.emission);
-//
-//				// Activate and bind the diffuse map
-//				glActiveTexture(GL_TEXTURE1); // Activate texture unit 1
-//				glBindTexture(GL_TEXTURE_2D, object->GetComponent<MeshRenderer>()->material.diffuseMap); // Bind diffuse map
-//				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//				shader->setInt("material.diffuseMap", 1); // Set the sampler uniform to texture unit 1
-//				shader->setVec3("material.diffuse", object->GetComponent<MeshRenderer>()->material.diffuse);
-//
-//				// Activate and bind the specular map
-//				glActiveTexture(GL_TEXTURE2); // Activate texture unit 2
-//				glBindTexture(GL_TEXTURE_2D, object->GetComponent<MeshRenderer>()->material.specularMap); // Bind specular map
-//				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//				shader->setInt("material.specularMap", 2); // Set the sampler uniform to texture unit 2
-//				shader->setVec3("material.specular", object->GetComponent<MeshRenderer>()->material.specular);
-//
-//				// Set shininess value
-//				shader->setFloat("material.shininess", object->GetComponent<MeshRenderer>()->material.shininess);
-//
-//				shader->setVec3("viewPos", cam.transform.position);
-//			}
-//
-//			//SKYBOX
-//			if (object->GetID() == currentScene.skybox_ent->GetID()) glDepthMask(GL_FALSE); // If object is skybox, disable depth
-//			render(*object);
-//
-//			glDepthMask(GL_TRUE);
-//		}
-//	}
-//	ImGui::Render();
-//	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-//	glfwSwapBuffers(window);
-//}
 
 void Renderer::reloadShaders()
 {

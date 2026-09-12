@@ -1,0 +1,5 @@
+{
+  "shader_path": "unlit",
+  "diffuse_path": "assets/sky.jpg",
+  "color": "1,0,0"
+}

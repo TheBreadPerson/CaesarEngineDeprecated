@@ -4,6 +4,17 @@
 #include <globals.hpp>
 #include <vector>
 #include <light.hpp>
+#include <json.hpp>
+
+using json = nlohmann::json;
+
+struct SceneData
+{
+	std::vector<Entity*> entityList;
+	std::vector<Light*> lights;
+	Entity* skybox_ent;
+	SceneLight sceneLighting;
+};
 
 class Scene
 {
@@ -12,6 +23,8 @@ public:
 	virtual void Start() = 0;
 	virtual void Update() {};
 	virtual void FixedUpdate(double deltaTime) {};
+	SceneData sceneData;
+	std::string name = "scene";
 };
 
 class SceneManager
@@ -19,16 +32,14 @@ class SceneManager
 public:
 	SceneManager();
 	SceneManager(std::shared_ptr<Scene> scene);
-	std::vector<Entity*> entityList;
-	std::vector<Light*> lights;
-	Entity* skybox_ent;
-	SceneLight sceneLighting;
 	void openScene(std::shared_ptr<Scene> scene);
 	void closeScene();
 	void Update();
 	void FixedUpdate(double deltaTime);
-private:
 	std::shared_ptr<Scene> currentScene;
+
+	void saveScene(std::shared_ptr<Scene> _scene);
+	SceneData loadScene(const char* scene_path);
 };
 
-extern SceneManager currentScene;
+extern SceneManager sceneManager;

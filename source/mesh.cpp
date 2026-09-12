@@ -7,11 +7,6 @@
 #include <glm/glm.hpp>
 #include <shader.hpp>
 #include <asset_manager.hpp>
-
-#include <fastgltf/glm_element_traits.hpp>
-#include <fastgltf/core.hpp>
-#include <fastgltf/types.hpp>
-
 #include <iostream>
 
 using namespace glm;
@@ -34,7 +29,7 @@ Mesh AssetManager::loadModel(std::filesystem::path path)
 		return gltfMesh;
 	}
 
-	
+
 
 	auto gltfFile = fastgltf::MappedGltfFile::FromPath(path);
 	if (!bool(gltfFile)) {
@@ -129,19 +124,12 @@ Mesh AssetManager::loadModel(std::filesystem::path path)
 	return gltfMesh;
 }
 
-void MeshRenderer::setMesh(const char* _mesh_path)
-{
-	mesh_path = _mesh_path;
-}
-
-void MeshRenderer::setShader(const char* _shader_name)
-{
-	material.shader = AssetManager::shader_list[_shader_name];
-}
-
-
 unsigned int AssetManager::LoadTexture(const char* filepath)
 {
+	if (filepath == nullptr)
+	{
+		return -1;
+	}
 	unsigned int texture;
 
 	// texture 
@@ -180,39 +168,31 @@ unsigned int AssetManager::LoadTexture(const char* filepath)
 	stbi_image_free(data);
 	return texture;
 }
-//unsigned int graphics::LoadTexture(const char* filepath)
-//{
-//	unsigned int texture;
-//
-//	// Generate and bind the texture
-//	glGenTextures(1, &texture);
-//	glBindTexture(GL_TEXTURE_2D, texture);
-//
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//
-//	// Load image data
-//	int width, height, nrChannels;
-//	stbi_set_flip_vertically_on_load(true); // Flip the image on the y-axis
-//	unsigned char* data = stbi_load(filepath, &width, &height, &nrChannels, 0);
-//
-//	if (data)
-//	{
-//		std::cout << "Successfully loaded texture: " << filepath << std::endl;
-//		// Upload texture data to GPU (no mipmaps, no parameters set)
-//		glTexImage2D(GL_TEXTURE_2D, 0, nrChannels > 3 ? GL_RGBA : GL_RGB, width, height, 0,
-//			nrChannels > 3 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, data);
-//	}
-//	else
-//	{
-//		std::cout << "Failed to load texture: " << filepath << std::endl;
-//	}
-//
-//	// Free image data
-//	stbi_image_free(data);
-//
-//	// Return the texture ID
-//	return texture;
-//}
+
+void MeshRenderer::setMesh(const char* _mesh_path)
+{
+	mesh_path = _mesh_path;
+}
+
+void Material::setShader(const char* _shader_name)
+{
+	shader_path = _shader_name;
+	shader = AssetManager::shader_list[shader_path];
+}
+
+void MeshRenderer::setMaterial(const char* _material_path)
+{
+	material_path = _material_path;
+	material = AssetManager::material_list[material_path];
+}
+
+void Material::save(const char* save_path)
+{
+	std::ofstream file(save_path);
+	json material_json;
+	material_json["shader_path"] = Material::shader_path;
+	material_json["diffuse_path"] = Material::diffuse_path;
+	material_json["color"] = std::format("{},{},{}", Material::diffuse.x, Material::diffuse.y, Material::diffuse.z);
+
+	file << material_json << std::endl;
+}
